@@ -11,9 +11,9 @@
         android:layout_height="wrap_content"
         android:text="MAP"
         android:id="@+id/mapButton"
+        android:layout_marginBottom="116dp"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:layout_marginBottom="151dp" />
+        android:layout_centerHorizontal="true" />
 
     <ImageView
         android:layout_width="wrap_content"
