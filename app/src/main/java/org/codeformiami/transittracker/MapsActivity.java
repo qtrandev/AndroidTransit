@@ -81,6 +81,7 @@ public class MapsActivity extends FragmentActivity {
                 Toast toast = Toast.makeText(context, text, duration);
                 toast.show();
                 new MyAsyncTask(MapsActivity.this, mMap).execute();
+                new TrainAsyncTask(MapsActivity.this, mMap).execute();
 
                 handler.postDelayed(this,10000); // refresh time
 
