@@ -17,6 +17,7 @@ public class MainActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        setTitle("Transit Tracker");
 
         ImageView img=(ImageView)findViewById(R.id.imageView);
         Drawable myDrawable = getResources().getDrawable(R.drawable.logo);
