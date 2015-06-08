@@ -113,13 +113,16 @@ class MyAsyncTask extends AsyncTask<String, String, Void> {
 
                 String tripHeadsign = jObject.getString("TripHeadsign");
                 String routeId = jObject.getString("RouteID");
+                String busId = jObject.getString("BusID");
+                String serviceDirection = jObject.getString("ServiceDirection");
+                String locationUpdated = jObject.getString("LocationUpdated");
                 double latitude = jObject.getDouble("Latitude");
                 double longitude = jObject.getDouble("Longitude");
 
                 mMap.addMarker(new MarkerOptions()
                         .position(new LatLng(latitude,longitude))
                         .title(tripHeadsign)
-                        .snippet("Route: "+routeId)
+                        .snippet("Route: "+routeId+" "+serviceDirection+" (Bus: "+busId+") "+locationUpdated)
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
 
             } // End Loop
