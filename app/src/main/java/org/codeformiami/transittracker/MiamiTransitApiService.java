@@ -3,6 +3,7 @@ package org.codeformiami.transittracker;
 import org.codeformiami.transittracker.model.BusResult;
 import org.codeformiami.transittracker.model.TrackerResult;
 import org.codeformiami.transittracker.model.TrainResult;
+import org.codeformiami.transittracker.model.TrainRouteResult;
 
 import retrofit.Callback;
 import retrofit.http.GET;
@@ -16,4 +17,7 @@ public interface MiamiTransitApiService {
 
     @GET("/api/Trains.json")
     void trains(Callback<TrainResult> cb);
+
+    @GET("/api/TrainMapShape.json")
+    void trainRoutes(Callback<TrainRouteResult> cb);
 }

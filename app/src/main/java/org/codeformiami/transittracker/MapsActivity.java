@@ -1,6 +1,7 @@
 package org.codeformiami.transittracker;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Handler;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -13,6 +14,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 import org.codeformiami.transittracker.model.Bus;
 import org.codeformiami.transittracker.model.BusResult;
@@ -21,7 +23,9 @@ import org.codeformiami.transittracker.model.TrackerProperties;
 import org.codeformiami.transittracker.model.TrackerResult;
 import org.codeformiami.transittracker.model.Train;
 import org.codeformiami.transittracker.model.TrainResult;
+import org.codeformiami.transittracker.model.TrainRouteResult;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -100,6 +104,7 @@ public class MapsActivity extends FragmentActivity {
                 .build();
 
         api = restAdapter.create(MiamiTransitApiService.class);
+        requestTrainRoutes();
 
         final Handler handler=new Handler();
         handler.post(new Runnable() {
@@ -195,8 +200,10 @@ public class MapsActivity extends FragmentActivity {
                     }
                 }
             }
+
             @Override
-            public void failure(RetrofitError retrofitError) {}
+            public void failure(RetrofitError retrofitError) {
+            }
         });
     }
 
@@ -247,5 +254,44 @@ public class MapsActivity extends FragmentActivity {
         marker.setPosition(new LatLng(train.Latitude, train.Longitude));
         marker.setTitle(train.LineID + " " + train.TrainID + " " + train.Service);
         marker.setSnippet("Location Updated: " + train.LocationUpdated);
+    }
+
+    private void requestTrainRoutes() {
+        api.trainRoutes(new Callback<TrainRouteResult>() {
+            @Override
+            public void success(TrainRouteResult trainRouteResult, Response response) {
+
+                List<TrainRouteResult.TrainRoutePosition> greenLine = new ArrayList<TrainRouteResult.TrainRoutePosition>();
+                List<TrainRouteResult.TrainRoutePosition> orangeLine = new ArrayList<TrainRouteResult.TrainRoutePosition>();
+
+                for (TrainRouteResult.TrainRoutePosition trainRoutePosition : trainRouteResult.RecordSet.Record) {
+                    switch (trainRoutePosition.LineID) {
+                        case "GRN":
+                            greenLine.add(trainRoutePosition);
+                            break;
+                        default:
+                            orangeLine.add(trainRoutePosition);
+                            break;
+                    }
+                }
+
+                addMetroRailRouteColors(greenLine, Color.GREEN);
+                addMetroRailRouteColors(orangeLine, Color.rgb(255,102,0)); // Red-range
+            }
+            @Override
+            public void failure(RetrofitError retrofitError) {}
+        });
+    }
+
+    private void addMetroRailRouteColors(List<TrainRouteResult.TrainRoutePosition> positions, int color) {
+        PolylineOptions line = new PolylineOptions();
+        line.width(10);
+        line.color(color);
+
+        for (TrainRouteResult.TrainRoutePosition trainRoutePosition : positions) {
+            line.add(new LatLng(trainRoutePosition.Latitude, trainRoutePosition.Longitude));
+        }
+
+        mMap.addPolyline(line);
     }
 }
