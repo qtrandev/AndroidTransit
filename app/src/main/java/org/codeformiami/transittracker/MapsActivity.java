@@ -19,6 +19,8 @@ import org.codeformiami.transittracker.model.BusResult;
 import org.codeformiami.transittracker.model.Tracker;
 import org.codeformiami.transittracker.model.TrackerProperties;
 import org.codeformiami.transittracker.model.TrackerResult;
+import org.codeformiami.transittracker.model.Train;
+import org.codeformiami.transittracker.model.TrainResult;
 
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +37,8 @@ public class MapsActivity extends FragmentActivity {
     private HashMap<String, Marker> busMap = new HashMap<String, Marker>();
     private List<Tracker> trackers;
     private HashMap<String, Marker> trackerMap = new HashMap<String, Marker>();
+    private List<Train> trains;
+    private HashMap<String, Marker> trainMap = new HashMap<String, Marker>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,13 +133,15 @@ public class MapsActivity extends FragmentActivity {
                         if (foundBusMarker != null) {
                             updateBusMarker(bus, foundBusMarker);
                         } else {
-                            addBusMarker(bus);
+                            addBusMarker(bus); // Found new bus
                         }
                     }
                 }
             }
+
             @Override
-            public void failure(RetrofitError retrofitError) {}
+            public void failure(RetrofitError retrofitError) {
+            }
         });
         api.trackers(new Callback<TrackerResult>() {
             @Override
@@ -146,14 +152,40 @@ public class MapsActivity extends FragmentActivity {
                     for (Tracker tracker : trackers) {
                         addTrackerMarker(tracker);
                     }
-                } else { // Buses and markers already exists, move positions
+                } else { // Trackers and markers already exists, move positions
                     Marker foundTrackerMarker;
                     for (Tracker tracker : trackerResult.features) {
                         foundTrackerMarker = busMap.get(tracker.properties.BusID);
                         if (foundTrackerMarker != null) {
                             updateTrackerMarker(tracker, foundTrackerMarker);
                         } else {
-                            addTrackerMarker(tracker);
+                            addTrackerMarker(tracker); // Found new tracker
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void failure(RetrofitError retrofitError) {
+            }
+        });
+        api.trains(new Callback<TrainResult>() {
+            @Override
+            public void success(TrainResult trainResult, Response response) {
+                if (trains == null) {
+                    trains = trainResult.RecordSet.Record;
+                    // Add new markers to map
+                    for (Train train : trains) {
+                        addTrainMarker(train);
+                    }
+                } else { // Trains and markers already exists, move positions
+                    Marker foundTrainMarker;
+                    for (Train train : trainResult.RecordSet.Record) {
+                        foundTrainMarker = busMap.get(train.TrainID);
+                        if (foundTrainMarker != null) {
+                            updateTrainMarker(train, foundTrainMarker);
+                        } else {
+                            addTrainMarker(train); // Found new train
                         }
                     }
                 }
@@ -195,5 +227,20 @@ public class MapsActivity extends FragmentActivity {
         marker.setPosition(new LatLng(prop.lat, prop.lon));
         marker.setTitle("GPS Tracker Bus " + prop.BusID);
         marker.setSnippet("Speed: " + prop.speed + " mph, Updated: " + prop.bustime);
+    }
+
+    private void addTrainMarker(Train train) {
+        Marker marker = mMap.addMarker(new MarkerOptions()
+                .position(new LatLng(train.Latitude, train.Longitude))
+                .title(train.LineID + " " + train.TrainID + " " + train.Service)
+                .snippet("Location Updated: " + train.LocationUpdated)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+        busMap.put(train.TrainID, marker);
+    }
+
+    private void updateTrainMarker(Train train, Marker marker) {
+        marker.setPosition(new LatLng(train.Latitude, train.Longitude));
+        marker.setTitle(train.LineID + " " + train.TrainID + " " + train.Service);
+        marker.setSnippet("Location Updated: " + train.LocationUpdated);
     }
 }
