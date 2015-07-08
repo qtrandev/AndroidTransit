@@ -14,9 +14,22 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.codeformiami.transittracker.model.Bus;
+import org.codeformiami.transittracker.model.BusResult;
+
+import java.util.HashMap;
+import java.util.List;
+
+import retrofit.Callback;
+import retrofit.RestAdapter;
+import retrofit.RetrofitError;
+import retrofit.client.Response;
+
 public class MapsActivity extends FragmentActivity {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
+    private List<Bus> buses;
+    private HashMap<String, Marker> busMap = new HashMap<String, Marker>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,25 +82,78 @@ public class MapsActivity extends FragmentActivity {
         mMap.moveCamera( CameraUpdateFactory.newLatLngZoom(new LatLng(25.7820998,-80.1408048), 12.0f) );
 
         final Handler handler=new Handler();
-        handler.post(new Runnable(){
+        handler.post(new Runnable() {
 
             @Override
             public void run() {
-                mMap.clear();
+                //mMap.clear();
                 Context context = getApplicationContext();
                 CharSequence text = "Refreshing";
                 int duration = Toast.LENGTH_SHORT;
 
                 Toast toast = Toast.makeText(context, text, duration);
                 toast.show();
-                new MyAsyncTask(MapsActivity.this, mMap).execute();
-                new TrainAsyncTask(MapsActivity.this, mMap).execute();
-                new TrackerAsyncTask(MapsActivity.this, mMap).execute();
+                requestBuses();
+                //new TrainAsyncTask(MapsActivity.this, mMap).execute();
+                //new TrackerAsyncTask(MapsActivity.this, mMap).execute();
 
-                handler.postDelayed(this,10000); // refresh time
+                handler.postDelayed(this, 10000); // refresh time
 
             }
 
         });
+    }
+
+    private void requestBuses() {
+        RestAdapter restAdapter = new RestAdapter.Builder()
+                .setLogLevel(RestAdapter.LogLevel.FULL)
+                .setEndpoint("http://miami-transit-api.herokuapp.com")
+                .build();
+
+        MiamiTransitApiService api = restAdapter.create(MiamiTransitApiService.class);
+        api.buses(new Callback<BusResult>() {
+            @Override
+            public void success(BusResult busResult, Response response) {
+                if (buses == null) {
+                    buses = busResult.RecordSet.Record;
+                    // Add new markers to map
+                    for (Bus bus : buses) {
+                        addBusMarker(bus);
+                    }
+
+                } else { // Buses and markers already exists, move positions
+                    Marker foundBusMarker;
+                    for (Bus bus : busResult.RecordSet.Record) {
+                        foundBusMarker = busMap.get(bus.BusID);
+                        if (foundBusMarker != null) {
+                            updateMarker(bus, foundBusMarker);
+                        } else {
+                            addBusMarker(bus);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void failure(RetrofitError retrofitError) {
+            }
+        });
+    }
+
+    private void addBusMarker(Bus bus) {
+        Marker marker = mMap.addMarker(new MarkerOptions()
+                .position(new LatLng(bus.Latitude, bus.Longitude))
+                .title(bus.TripHeadsign)
+                .snippet("Route: " + bus.RouteID + " " + bus.ServiceDirection +
+                        " (Bus: " + bus.BusID + ") " + bus.LocationUpdated)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+        busMap.put(bus.BusID, marker);
+    }
+
+    private void updateMarker(Bus bus, Marker marker) {
+        marker.setPosition(new LatLng(bus.Latitude, bus.Longitude));
+        marker.setTitle(bus.TripHeadsign);
+        marker.setSnippet("Route: " + bus.RouteID + " " + bus.ServiceDirection +
+                " (Bus: " + bus.BusID + ") " + bus.LocationUpdated);
     }
 }
