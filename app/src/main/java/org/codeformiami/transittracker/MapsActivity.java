@@ -89,6 +89,9 @@ public class MapsActivity extends FragmentActivity {
      */
     private void setUpMap() {
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(25.7820998, -80.1408048), 12.0f));
+        mMap.getUiSettings().setRotateGesturesEnabled(false);
+        mMap.getUiSettings().setZoomControlsEnabled(true);
+        mMap.setMyLocationEnabled(true);
 
         final Handler handler=new Handler();
         handler.post(new Runnable() {
