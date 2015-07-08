@@ -33,6 +33,7 @@ import retrofit.client.Response;
 public class MapsActivity extends FragmentActivity {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
+    private MiamiTransitApiService api;
     private List<Bus> buses;
     private HashMap<String, Marker> busMap = new HashMap<String, Marker>();
     private List<Tracker> trackers;
@@ -93,6 +94,13 @@ public class MapsActivity extends FragmentActivity {
         mMap.getUiSettings().setZoomControlsEnabled(true);
         mMap.setMyLocationEnabled(true);
 
+        RestAdapter restAdapter = new RestAdapter.Builder()
+                .setLogLevel(RestAdapter.LogLevel.FULL)
+                .setEndpoint("http://miami-transit-api.herokuapp.com")
+                .build();
+
+        api = restAdapter.create(MiamiTransitApiService.class);
+
         final Handler handler=new Handler();
         handler.post(new Runnable() {
 
@@ -114,12 +122,6 @@ public class MapsActivity extends FragmentActivity {
     }
 
     private void requestApi() {
-        RestAdapter restAdapter = new RestAdapter.Builder()
-                .setLogLevel(RestAdapter.LogLevel.FULL)
-                .setEndpoint("http://miami-transit-api.herokuapp.com")
-                .build();
-
-        MiamiTransitApiService api = restAdapter.create(MiamiTransitApiService.class);
         api.buses(new Callback<BusResult>() {
             @Override
             public void success(BusResult busResult, Response response) {
@@ -184,7 +186,7 @@ public class MapsActivity extends FragmentActivity {
                 } else { // Trains and markers already exists, move positions
                     Marker foundTrainMarker;
                     for (Train train : trainResult.RecordSet.Record) {
-                        foundTrainMarker = busMap.get(train.TrainID);
+                        foundTrainMarker = trainMap.get(train.TrainID);
                         if (foundTrainMarker != null) {
                             updateTrainMarker(train, foundTrainMarker);
                         } else {
@@ -238,7 +240,7 @@ public class MapsActivity extends FragmentActivity {
                 .title(train.LineID + " " + train.TrainID + " " + train.Service)
                 .snippet("Location Updated: " + train.LocationUpdated)
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-        busMap.put(train.TrainID, marker);
+        trainMap.put(train.TrainID, marker);
     }
 
     private void updateTrainMarker(Train train, Marker marker) {
