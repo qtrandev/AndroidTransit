@@ -1,5 +1,6 @@
 package org.codeformiami.transittracker;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Handler;
@@ -130,20 +131,26 @@ public class MapsActivity extends FragmentActivity {
         api.buses(new Callback<BusResult>() {
             @Override
             public void success(BusResult busResult, Response response) {
-                if (buses == null) {
-                    buses = busResult.RecordSet.Record;
-                    // Add new markers to map
-                    for (Bus bus : buses) {
-                        addBusMarker(bus);
-                    }
-                } else { // Buses and markers already exists, move positions
-                    Marker foundBusMarker;
-                    for (Bus bus : busResult.RecordSet.Record) {
-                        foundBusMarker = busMap.get(bus.BusID);
-                        if (foundBusMarker != null) {
-                            updateBusMarker(bus, foundBusMarker);
-                        } else {
-                            addBusMarker(bus); // Found new bus
+                if (busResult.RecordSet==null || busResult.RecordSet.Record.isEmpty())     {
+                    Toast.makeText(getApplicationContext(), "Unfortunately bus data is not available.", Toast.LENGTH_LONG).show();
+
+                } else {
+
+                    if (buses == null) {
+                        buses = busResult.RecordSet.Record;
+                        // Add new markers to map
+                        for (Bus bus : buses) {
+                            addBusMarker(bus);
+                        }
+                    } else { // Buses and markers already exists, move positions
+                        Marker foundBusMarker;
+                        for (Bus bus : busResult.RecordSet.Record) {
+                            foundBusMarker = busMap.get(bus.BusID);
+                            if (foundBusMarker != null) {
+                                updateBusMarker(bus, foundBusMarker);
+                            } else {
+                                addBusMarker(bus); // Found new bus
+                            }
                         }
                     }
                 }
